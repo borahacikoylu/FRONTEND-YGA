@@ -83,7 +83,7 @@ export default function HomePage() {
               <button
                 key={city.code}
                 className={clsx(
-                  "w-full aspect-square rounded-xl flex flex-col items-center justify-center text-base font-bold border-2 transition-all",
+                  "w-full aspect-square rounded-xl flex flex-col items-center justify-center text-base font-bold border-2 transition-all transition-transform duration-300 hover:scale-105 hover:shadow-2xl",
                   selected === city.code
                     ? "bg-green-500 border-green-300 text-white scale-105 shadow-lg"
                     : "bg-zinc-800 border-zinc-700 hover:bg-green-700 hover:text-white"
