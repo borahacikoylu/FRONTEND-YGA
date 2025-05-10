@@ -123,7 +123,7 @@ export default function HomePage() {
   }, [filtered]);
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center py-10">
+    <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center pt-32 pb-10">
       {/* Arama ve şehir butonu */}
       <div className="w-full max-w-2xl mb-8 flex items-center gap-4">
         <Input
@@ -152,7 +152,7 @@ export default function HomePage() {
             return (
               <div
                 key={concert.concert_id}
-                className="bg-zinc-800 rounded-xl shadow-lg flex flex-col items-center p-6 min-w-[350px] max-w-[350px] h-[480px]"
+                className="bg-zinc-800 rounded-xl shadow-lg flex flex-col items-center p-6 min-w-[350px] max-w-[350px] h-[480px] transition-transform duration-300 hover:scale-105 hover:shadow-2xl"
               >
                 <img
                   src={imageUrl}
