@@ -73,6 +73,9 @@ export default function HomePage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [clickedButtonId, setClickedButtonId] = useState<number | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const isLoggedIn = typeof window !== 'undefined' && localStorage.getItem("user") !== null;
 
   const filteredCities = cities.filter(
     (city) =>
@@ -206,6 +209,12 @@ export default function HomePage() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    setIsProfileOpen(false);
+    router.push("/login");
+  };
+
   return (
     <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center pt-32 pb-10">
       {/* Üst Bar */}
@@ -242,12 +251,78 @@ export default function HomePage() {
                 </span>
               )}
             </Button>
-            <Button variant="ghost" size="icon">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setIsProfileOpen(true)}
+            >
               <User className="h-6 w-6" />
             </Button>
           </div>
         </div>
       </div>
+
+      {/* Profile Dropdown */}
+      <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+        <DialogContent className="bg-zinc-800 text-white border-zinc-700 max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">
+              {isLoggedIn ? "Profil" : "Giriş Yap"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 space-y-3">
+            {isLoggedIn ? (
+              <>
+                <Button 
+                  className="w-full justify-start bg-zinc-700 hover:bg-zinc-600"
+                  onClick={() => {
+                    setIsProfileOpen(false);
+                    router.push("/tickets");
+                  }}
+                >
+                  🎫 Biletlerim
+                </Button>
+                <Button 
+                  className="w-full justify-start bg-zinc-700 hover:bg-zinc-600"
+                  onClick={() => {
+                    setIsProfileOpen(false);
+                    router.push("/profile");
+                  }}
+                >
+                  👤 Profilim
+                </Button>
+                <Button 
+                  className="w-full justify-start bg-red-500 hover:bg-red-600"
+                  onClick={handleLogout}
+                >
+                  🚪 Çıkış Yap
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  className="w-full justify-start bg-green-500 hover:bg-green-600"
+                  onClick={() => {
+                    setIsProfileOpen(false);
+                    router.push("/login");
+                  }}
+                >
+                  🔑 Giriş Yap
+                </Button>
+                <Button 
+                  className="w-full justify-start bg-zinc-700 hover:bg-zinc-600"
+                  onClick={() => {
+                    setIsProfileOpen(false);
+                    router.push("/login");
+                  }}
+                >
+                  ✍️ Kayıt Ol
+                </Button>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Konser Kartları */}
       <div className="w-full overflow-x-auto hide-scrollbar" ref={scrollRef}>
