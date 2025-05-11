@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ShoppingCart, User } from "lucide-react";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
 
 const cities = [
   { code: "01", name: "Adana" }, { code: "02", name: "Adıyaman" }, { code: "03", name: "Afyonkarahisar" },
@@ -197,6 +197,10 @@ export default function HomePage() {
         const data = await response.json();
 
         if (!response.ok) {
+          if (response.status === 400) {
+            toast.error("Bakiye yetersiz");
+            return;
+          }
           throw new Error(data.detail || "Bilet satın alınamadı");
         }
       }
@@ -217,6 +221,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center pt-32 pb-10">
+      <Toaster richColors position="top-center" />
       {/* Üst Bar */}
       <div className="fixed top-0 left-0 right-0 bg-zinc-800/80 backdrop-blur-sm border-b border-zinc-700 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
