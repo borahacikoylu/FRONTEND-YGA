@@ -94,6 +94,24 @@ export default function ProfilePage() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/logout/", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Çıkış yapılamadı");
+      }
+
+      localStorage.removeItem("user");
+      router.push("/login");
+    } catch (error) {
+      toast.error("Çıkış yapılırken bir hata oluştu");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center">
