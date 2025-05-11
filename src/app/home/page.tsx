@@ -173,6 +173,39 @@ export default function HomePage() {
     return cart.reduce((total, item) => total + (item.fiyat * item.quantity), 0);
   };
 
+  const handleCheckout = async () => {
+    const isLoggedIn = localStorage.getItem("user") !== null;
+
+    if (!isLoggedIn) {
+      localStorage.setItem("pendingTickets", JSON.stringify(cart.map(item => item.concert_id)));
+      router.push("/login");
+      return;
+    }
+
+    try {
+      for (const item of cart) {
+        const response = await fetch("http://localhost:8000/buy-ticket/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ concert_id: item.concert_id }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || "Bilet satın alınamadı");
+        }
+      }
+
+      setCart([]);
+      setIsCartOpen(false);
+      toast.success("Tüm biletler başarıyla satın alındı!");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Ödeme sırasında bir hata oluştu.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center pt-32 pb-10">
       {/* Üst Bar */}
@@ -400,7 +433,10 @@ export default function HomePage() {
                   <span className="text-lg font-semibold">Toplam</span>
                   <span className="text-2xl font-bold text-green-400">{getTotalPrice()}₺</span>
                 </div>
-                <Button className="w-full mt-4 bg-green-500 hover:bg-green-600">
+                <Button 
+                  className="w-full mt-4 bg-green-500 hover:bg-green-600"
+                  onClick={handleCheckout}
+                >
                   Ödemeye Geç
                 </Button>
               </div>
