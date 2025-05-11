@@ -5,6 +5,14 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import clsx from "clsx";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ShoppingCart, User } from "lucide-react";
+import { toast } from "sonner";
 
 const cities = [
   { code: "01", name: "Adana" }, { code: "02", name: "Adıyaman" }, { code: "03", name: "Afyonkarahisar" },
@@ -47,6 +55,10 @@ type Concert = {
   image: string;
 };
 
+type CartItem = Concert & {
+  quantity: number;
+};
+
 const PAGE_SIZE = 24;
 
 export default function HomePage() {
@@ -57,6 +69,10 @@ export default function HomePage() {
   const router = useRouter();
   const [cityName, setCityName] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [selectedConcert, setSelectedConcert] = useState<Concert | null>(null);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [clickedButtonId, setClickedButtonId] = useState<number | null>(null);
 
   const filteredCities = cities.filter(
     (city) =>
@@ -122,26 +138,85 @@ export default function HomePage() {
     return () => cancelAnimationFrame(raf);
   }, [filtered]);
 
+  const addToCart = (concert: Concert) => {
+    setCart(prevCart => {
+      const existingItem = prevCart.find(item => item.concert_id === concert.concert_id);
+      if (existingItem) {
+        return prevCart.map(item =>
+          item.concert_id === concert.concert_id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prevCart, { ...concert, quantity: 1 }];
+    });
+    toast.success("Konser sepete eklendi!");
+  };
+
+  const removeFromCart = (concertId: number) => {
+    setCart(prevCart => prevCart.filter(item => item.concert_id !== concertId));
+    toast.success("Konser sepetten çıkarıldı!");
+  };
+
+  const updateQuantity = (concertId: number, newQuantity: number) => {
+    if (newQuantity < 1) return;
+    setCart(prevCart =>
+      prevCart.map(item =>
+        item.concert_id === concertId
+          ? { ...item, quantity: newQuantity }
+          : item
+      )
+    );
+  };
+
+  const getTotalPrice = () => {
+    return cart.reduce((total, item) => total + (item.fiyat * item.quantity), 0);
+  };
+
   return (
     <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center pt-32 pb-10">
-      {/* Arama ve şehir butonu */}
-      <div className="w-full max-w-2xl mb-8 flex items-center gap-4">
-        <Input
-          className="bg-zinc-800 border-none text-white placeholder:text-zinc-400 flex-1 h-14 text-lg px-6"
-          placeholder="Konser Ara"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        {cityName && (
-          <Button
-            variant="outline"
-            className="whitespace-nowrap bg-white text-black border-none hover:bg-gray-200"
-            onClick={() => router.push("/")}
-          >
-            {cityName}
-          </Button>
-        )}
+      {/* Üst Bar */}
+      <div className="fixed top-0 left-0 right-0 bg-zinc-800/80 backdrop-blur-sm border-b border-zinc-700 z-50">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Input
+              className="bg-zinc-700 border-none text-white placeholder:text-zinc-400 w-64 h-10"
+              placeholder="Konser Ara"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {cityName && (
+              <Button
+                variant="outline"
+                className="whitespace-nowrap bg-white text-black border-none hover:bg-gray-200"
+                onClick={() => router.push("/")}
+              >
+                {cityName}
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
+              onClick={() => setIsCartOpen(true)}
+            >
+              <ShoppingCart className="h-6 w-6" />
+              {cart.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {cart.reduce((total, item) => total + item.quantity, 0)}
+                </span>
+              )}
+            </Button>
+            <Button variant="ghost" size="icon">
+              <User className="h-6 w-6" />
+            </Button>
+          </div>
+        </div>
       </div>
+
+      {/* Konser Kartları */}
       <div className="w-full overflow-x-auto hide-scrollbar" ref={scrollRef}>
         <div
           className="flex gap-x-8 py-4 flex-nowrap"
@@ -149,10 +224,12 @@ export default function HomePage() {
         >
           {pagedConcerts.map((concert) => {
             const imageUrl = `https://cdn.bubilet.com.tr${concert.image}`;
+            const isButtonClicked = clickedButtonId === concert.concert_id;
             return (
               <div
                 key={concert.concert_id}
-                className="bg-zinc-800 rounded-xl shadow-lg flex flex-col items-center p-6 min-w-[350px] max-w-[350px] h-[480px] transition-transform duration-300 hover:scale-105 hover:shadow-2xl"
+                className="bg-zinc-800 rounded-xl shadow-lg flex flex-col items-center p-6 min-w-[350px] max-w-[350px] h-[480px] transition-transform duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer"
+                onClick={() => setSelectedConcert(concert)}
               >
                 <img
                   src={imageUrl}
@@ -174,12 +251,164 @@ export default function HomePage() {
                   {concert.fiyat}₺
                 </div>
                 <div className="flex-grow" />
-                <Button className="w-full mt-auto">Satın Al</Button>
+                <Button 
+                  className={`w-full mt-auto relative overflow-hidden transition-all duration-300 ${
+                    isButtonClicked ? 'bg-green-600 scale-95' : 'bg-green-500 hover:bg-green-600'
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setClickedButtonId(concert.concert_id);
+                    addToCart(concert);
+                    setTimeout(() => setClickedButtonId(null), 300);
+                  }}
+                >
+                  <span className={`relative z-10 transition-transform duration-300 ${
+                    isButtonClicked ? 'scale-90' : ''
+                  }`}>
+                    {isButtonClicked ? 'Eklendi!' : 'Sepete Ekle'}
+                  </span>
+                  {isButtonClicked && (
+                    <div className="absolute inset-0 bg-green-400 animate-pulse" />
+                  )}
+                </Button>
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Konser Detay Modalı */}
+      <Dialog open={!!selectedConcert} onOpenChange={() => setSelectedConcert(null)}>
+        <DialogContent className="bg-zinc-800 text-white border-zinc-700 max-w-3xl">
+          {selectedConcert && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold text-center">
+                  {selectedConcert.konser_adi}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-6 mt-4">
+                <div className="relative h-[400px]">
+                  <img
+                    src={`https://cdn.bubilet.com.tr${selectedConcert.image}`}
+                    alt={selectedConcert.konser_adi}
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-zinc-300">Konser Detayları</h3>
+                    <div className="space-y-1">
+                      <p className="flex items-center text-zinc-400">
+                        <span className="mr-2">📍</span>
+                        <span className="font-medium text-white">{selectedConcert.mekan}</span>
+                      </p>
+                      <p className="flex items-center text-zinc-400">
+                        <span className="mr-2">📅</span>
+                        <span className="font-medium text-white">{selectedConcert.tarih}</span>
+                      </p>
+                      <p className="flex items-center text-zinc-400">
+                        <span className="mr-2">⏰</span>
+                        <span className="font-medium text-white">{selectedConcert.saat}</span>
+                      </p>
+                      <p className="flex items-center text-zinc-400">
+                        <span className="mr-2">🏠</span>
+                        <span className="font-medium text-white">{selectedConcert.adres}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t border-zinc-700">
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl font-bold text-green-400">
+                        {selectedConcert.fiyat}₺
+                      </span>
+                      <Button 
+                        className="bg-green-500 hover:bg-green-600"
+                        onClick={() => {
+                          addToCart(selectedConcert);
+                          setSelectedConcert(null);
+                        }}
+                      >
+                        Sepete Ekle
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Sepet Modalı */}
+      <Dialog open={isCartOpen} onOpenChange={setIsCartOpen}>
+        <DialogContent className="bg-zinc-800 text-white border-zinc-700 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Sepetim</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 flex flex-col h-[600px]">
+            <div className="flex-grow overflow-y-auto pr-2 space-y-4 custom-scrollbar">
+              {cart.length === 0 ? (
+                <p className="text-center text-zinc-400">Sepetiniz boş</p>
+              ) : (
+                cart.map((item) => (
+                  <div key={item.concert_id} className="flex items-center gap-4 p-4 bg-zinc-700/50 rounded-lg">
+                    <img
+                      src={`https://cdn.bubilet.com.tr${item.image}`}
+                      alt={item.konser_adi}
+                      className="w-20 h-20 object-cover rounded"
+                    />
+                    <div className="flex-grow">
+                      <h3 className="font-semibold">{item.konser_adi}</h3>
+                      <p className="text-sm text-zinc-400">{item.tarih} - {item.saat}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => updateQuantity(item.concert_id, item.quantity - 1)}
+                      >
+                        -
+                      </Button>
+                      <span className="w-8 text-center">{item.quantity}</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => updateQuantity(item.concert_id, item.quantity + 1)}
+                      >
+                        +
+                      </Button>
+                    </div>
+                    <div className="w-24 text-right">
+                      <p className="font-semibold text-green-400">{item.fiyat * item.quantity}₺</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-400 hover:text-red-500"
+                      onClick={() => removeFromCart(item.concert_id)}
+                    >
+                      Kaldır
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+            {cart.length > 0 && (
+              <div className="border-t border-zinc-700 pt-4 mt-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold">Toplam</span>
+                  <span className="text-2xl font-bold text-green-400">{getTotalPrice()}₺</span>
+                </div>
+                <Button className="w-full mt-4 bg-green-500 hover:bg-green-600">
+                  Ödemeye Geç
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Hiç konser yoksa */}
       {filtered.length === 0 && (
         <div className="text-zinc-400 mt-10 text-lg">Bu şehirde konser bulunamadı.</div>
