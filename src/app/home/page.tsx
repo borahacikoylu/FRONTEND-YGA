@@ -308,48 +308,51 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center pt-32 pb-10">
+    <div className="min-h-screen bg-background text-foreground flex flex-col items-center pt-28 pb-10">
       <Toaster richColors position="top-center" />
       {/* Üst Bar */}
-      <div className="fixed top-0 left-0 right-0 bg-zinc-800/80 backdrop-blur-sm border-b border-zinc-700 z-50">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="fixed top-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-b border-border z-50 anim-fade-in">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Input
-              className="bg-zinc-700 border-none text-white placeholder:text-zinc-400 w-64 h-10"
-              placeholder="Konser Ara"
+              className="w-64 h-10"
+              placeholder="Konser veya sanatçı ara..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
             {cityName && (
               <Button
                 variant="outline"
-                className="whitespace-nowrap bg-white text-black border-none hover:bg-gray-200"
+                className="whitespace-nowrap"
                 onClick={() => router.push("/")}
               >
                 {cityName}
               </Button>
             )}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
-              className="relative"
+              className="relative rounded-full"
               onClick={() => setIsCartOpen(true)}
             >
-              <ShoppingCart className="h-6 w-6" />
+              <ShoppingCart className="h-5 w-5" />
               {cart.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs rounded-full h-4 w-4 flex items-center justify-center">
                   {cart.reduce((total, item) => total + item.quantity, 0)}
                 </span>
               )}
+              <span className="sr-only">Sepeti aç</span>
             </Button>
             <Button 
               variant="ghost" 
               size="icon"
+              className="rounded-full"
               onClick={() => setIsProfileOpen(true)}
             >
-              <User className="h-6 w-6" />
+              <User className="h-5 w-5" />
+              <span className="sr-only">Profili aç</span>
             </Button>
           </div>
         </div>
@@ -357,59 +360,63 @@ export default function HomePage() {
 
       {/* Profile Dropdown */}
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-        <DialogContent className="bg-zinc-800 text-white border-zinc-700 max-w-sm">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">
-              {isLoggedIn ? "Profil" : "Giriş Yap"}
+              {isLoggedIn ? "Profil" : "Hesap"}
             </DialogTitle>
           </DialogHeader>
-          <div className="mt-4 space-y-3">
+          <div className="mt-4 space-y-2">
             {isLoggedIn ? (
               <>
                 <Button 
-                  className="w-full justify-start bg-zinc-700 hover:bg-zinc-600"
+                  variant="ghost"
+                  className="w-full justify-start"
                   onClick={() => {
                     setIsProfileOpen(false);
                     router.push("/tickets");
                   }}
                 >
-                  🎫 Biletlerim
+                  <span className="mr-2">🎫</span> Biletlerim
                 </Button>
                 <Button 
-                  className="w-full justify-start bg-zinc-700 hover:bg-zinc-600"
+                  variant="ghost"
+                  className="w-full justify-start"
                   onClick={() => {
                     setIsProfileOpen(false);
                     router.push("/profile");
                   }}
                 >
-                  👤 Profilim
+                  <span className="mr-2">👤</span> Profilim
                 </Button>
                 <Button 
-                  className="w-full justify-start bg-red-500 hover:bg-red-600"
+                  variant="destructive"
+                  className="w-full justify-start"
                   onClick={handleLogout}
                 >
-                  🚪 Çıkış Yap
+                  <span className="mr-2">🚪</span> Çıkış Yap
                 </Button>
               </>
             ) : (
               <>
                 <Button 
-                  className="w-full justify-start bg-green-500 hover:bg-green-600"
+                  className="w-full"
                   onClick={() => {
                     setIsProfileOpen(false);
                     router.push("/login");
                   }}
                 >
-                  🔑 Giriş Yap
+                  <span className="mr-2">🔑</span> Giriş Yap
                 </Button>
                 <Button 
-                  className="w-full justify-start bg-zinc-700 hover:bg-zinc-600"
+                  variant="secondary"
+                  className="w-full"
                   onClick={() => {
                     setIsProfileOpen(false);
-                    router.push("/login");
+                    router.push("/login"); // Assuming register is on the same page
                   }}
                 >
-                  ✍️ Kayıt Ol
+                  <span className="mr-2">✍️</span> Kayıt Ol
                 </Button>
               </>
             )}
@@ -418,60 +425,63 @@ export default function HomePage() {
       </Dialog>
 
       {/* Konser Kartları */}
-      <div className="w-full overflow-x-auto hide-scrollbar" ref={scrollRef}>
-        <div
-          className="flex gap-x-8 py-4 flex-nowrap"
-          style={{ minWidth: `${pagedConcerts.length * 370}px`, willChange: "transform" }}
-        >
-          {pagedConcerts.map((concert) => {
+      <div className="w-full max-w-7xl px-4 sm:px-6 lg:px-8 anim-fade-in-up">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          {pagedConcerts.map((concert, index) => {
             const imageUrl = `https://cdn.bubilet.com.tr${concert.image}`;
             const isButtonClicked = clickedButtonId === concert.concert_id;
             return (
               <div
                 key={concert.concert_id}
-                className="bg-zinc-800 rounded-xl shadow-lg flex flex-col items-center p-6 min-w-[350px] max-w-[350px] h-[480px] transition-transform duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer"
+                className="bg-card rounded-lg shadow-md flex flex-col group cursor-pointer overflow-hidden transition-transform duration-300 ease-in-out hover:-translate-y-1 card-glow anim-fade-in-up"
+                style={{ animationDelay: `${index * 50}ms` }}
                 onClick={() => setSelectedConcert(concert)}
               >
-                <img
-                  src={imageUrl}
-                  alt={concert.konser_adi}
-                  className="w-full h-56 object-cover rounded-lg mb-4"
-                />
-                <div className="font-bold text-xl text-center mb-2 line-clamp-2 h-14 flex items-center justify-center w-full">
-                  {concert.konser_adi}
+                <div className="relative">
+                  <img
+                    src={imageUrl}
+                    alt={concert.konser_adi}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
                 </div>
-                <div className="flex items-center text-sm text-zinc-300 mb-1 w-full h-6">
-                  <span className="mr-1">📍</span>
-                  <span className="truncate">{concert.mekan}</span>
+                <div className="p-4 flex flex-col flex-grow">
+                  <h3 className="font-bold text-lg mb-2 line-clamp-2 h-14">
+                    {concert.konser_adi}
+                  </h3>
+                  <div className="flex items-center text-sm text-muted-foreground mb-1">
+                    <span className="mr-1.5">📍</span>
+                    <span className="truncate">{concert.mekan}</span>
+                  </div>
+                  <div className="flex items-center text-sm text-muted-foreground mb-3">
+                    <span className="mr-1.5">📅</span>
+                    <span>{concert.tarih}</span>
+                  </div>
+                  <div className="flex-grow" />
+                  <div className="flex justify-between items-center mt-2">
+                    <div className="text-primary font-semibold text-lg">
+                      {concert.fiyat}₺
+                    </div>
+                    <Button 
+                      size="sm"
+                      className={`relative overflow-hidden transition-all duration-300 ${
+                        isButtonClicked ? 'bg-primary/90 scale-95' : ''
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setClickedButtonId(concert.concert_id);
+                        addToCart(concert);
+                        setTimeout(() => setClickedButtonId(null), 300);
+                      }}
+                    >
+                      <span className={`transition-transform duration-300 ${
+                        isButtonClicked ? 'scale-90' : ''
+                      }`}>
+                        {isButtonClicked ? 'Eklendi!' : 'Sepete Ekle'}
+                      </span>
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center text-sm text-zinc-400 mb-2 w-full h-6">
-                  <span className="mr-1">📅</span>
-                  <span>{concert.tarih}</span>
-                </div>
-                <div className="text-green-400 font-semibold text-lg mb-3">
-                  {concert.fiyat}₺
-                </div>
-                <div className="flex-grow" />
-                <Button 
-                  className={`w-full mt-auto relative overflow-hidden transition-all duration-300 ${
-                    isButtonClicked ? 'bg-green-600 scale-95' : 'bg-green-500 hover:bg-green-600'
-                  }`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setClickedButtonId(concert.concert_id);
-                    addToCart(concert);
-                    setTimeout(() => setClickedButtonId(null), 300);
-                  }}
-                >
-                  <span className={`relative z-10 transition-transform duration-300 ${
-                    isButtonClicked ? 'scale-90' : ''
-                  }`}>
-                    {isButtonClicked ? 'Eklendi!' : 'Sepete Ekle'}
-                  </span>
-                  {isButtonClicked && (
-                    <div className="absolute inset-0 bg-green-400 animate-pulse" />
-                  )}
-                </Button>
               </div>
             );
           })}
@@ -480,67 +490,53 @@ export default function HomePage() {
 
       {/* Konser Detay Modalı */}
       <Dialog open={!!selectedConcert} onOpenChange={() => setSelectedConcert(null)}>
-        <DialogContent className="bg-zinc-800 text-white border-zinc-700 max-w-3xl">
+        <DialogContent className="max-w-4xl">
           {selectedConcert && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-2xl font-bold text-center">
+                <DialogTitle className="text-3xl font-bold text-center mb-2">
                   {selectedConcert.konser_adi}
                 </DialogTitle>
               </DialogHeader>
-              <div className="grid grid-cols-2 gap-6 mt-4">
-                <div className="relative h-[400px]">
+              <div className="grid md:grid-cols-2 gap-8 mt-4">
+                <div className="relative h-[450px] rounded-lg overflow-hidden">
                   <img
                     src={`https://cdn.bubilet.com.tr${selectedConcert.image}`}
                     alt={selectedConcert.konser_adi}
-                    className="w-full h-full object-cover rounded-lg"
+                    className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="flex flex-col space-y-4">
-                  <div className="space-y-2">
-                     <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-semibold text-zinc-300">Konser Detayları</h3>
-                       <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          if (!selectedConcert) return;
-                          const concertUrl = `${window.location.origin}/home?concert=${selectedConcert.concert_id}`;
-                          navigator.clipboard.writeText(concertUrl);
-                          toast.success("URL Kopyalandı!");
-                        }}
-                        className="text-zinc-400 hover:text-white"
-                      >
-                        <Share2 className="h-5 w-5" />
-                      </Button>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="flex items-center text-zinc-400">
-                        <span className="mr-2">📍</span>
-                        <span className="font-medium text-white">{selectedConcert.mekan}</span>
-                      </p>
-                      <p className="flex items-center text-zinc-400">
-                        <span className="mr-2">📅</span>
-                        <span className="font-medium text-white">{selectedConcert.tarih}</span>
-                      </p>
-                      <p className="flex items-center text-zinc-400">
-                        <span className="mr-2">⏰</span>
-                        <span className="font-medium text-white">{selectedConcert.saat}</span>
-                      </p>
-                      <p className="flex items-center text-zinc-400">
-                        <span className="mr-2">🏠</span>
-                        <span className="font-medium text-white">{selectedConcert.adres}</span>
-                      </p>
-                    </div>
+                <div className="flex flex-col space-y-4 pt-2">
+                  <div className="flex justify-between items-start">
+                    <h3 className="text-xl font-semibold text-primary">Konser Detayları</h3>
+                     <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        if (!selectedConcert) return;
+                        const concertUrl = `${window.location.origin}/home?concert=${selectedConcert.concert_id}`;
+                        navigator.clipboard.writeText(concertUrl);
+                        toast.success("URL Kopyalandı!");
+                      }}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Share2 className="h-5 w-5" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <p className="flex items-center"><span className="text-muted-foreground w-20">Mekan:</span> <span className="font-semibold">{selectedConcert.mekan}</span></p>
+                    <p className="flex items-center"><span className="text-muted-foreground w-20">Tarih:</span> <span className="font-semibold">{selectedConcert.tarih}</span></p>
+                    <p className="flex items-center"><span className="text-muted-foreground w-20">Saat:</span> <span className="font-semibold">{selectedConcert.saat}</span></p>
+                    <p className="flex items-center"><span className="text-muted-foreground w-20">Adres:</span> <span className="font-semibold">{selectedConcert.adres}</span></p>
                   </div>
                   <div className="flex-grow" />
-                  <div className="pt-4 border-t border-zinc-700">
+                  <div className="pt-4 border-t border-border">
                     <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-green-400">
+                      <span className="text-3xl font-bold text-primary">
                         {selectedConcert.fiyat}₺
                       </span>
                       <Button 
-                        className="bg-green-500 hover:bg-green-600"
+                        size="lg"
                         onClick={() => {
                           addToCart(selectedConcert);
                           setSelectedConcert(null);
@@ -552,41 +548,41 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-              <div className="mt-6 pt-6 border-t border-zinc-700">
+              <div className="mt-6 pt-6 border-t border-border">
                 <h3 className="text-xl font-bold mb-4">Yorumlar</h3>
                 {isLoggedIn ? (
-                  <form onSubmit={handleCommentSubmit} className="flex gap-2 mb-4">
+                  <form onSubmit={handleCommentSubmit} className="flex gap-2 mb-6">
                     <Input
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       placeholder="Yorumunuzu yazın..."
-                      className="bg-zinc-700 border-none flex-grow"
+                      className="flex-grow"
                     />
-                    <Button type="submit" className="bg-green-500 hover:bg-green-600">Yorum Yap</Button>
+                    <Button type="submit">Yorum Yap</Button>
                   </form>
                 ) : (
-                  <div className="text-center p-4 bg-zinc-700/50 rounded-lg mb-4">
-                    <p className="text-zinc-400">
+                  <div className="text-center p-4 bg-muted/50 rounded-lg mb-6">
+                    <p className="text-muted-foreground">
                       Yorum yapmak için{' '}
-                      <Button variant="link" className="p-0 h-auto text-green-400 hover:underline" onClick={() => router.push('/login')}>
+                      <Button variant="link" className="p-0 h-auto text-primary" onClick={() => router.push('/login')}>
                         giriş yapmalısınız
                       </Button>.
                     </p>
                   </div>
                 )}
-                <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                <div className="space-y-4 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                   {comments.length > 0 ? (
                     comments.map((comment, index) => (
-                      <div key={index} className="bg-zinc-700/50 p-3 rounded-lg">
+                      <div key={index} className="bg-muted/50 p-4 rounded-lg">
                         <div className="flex justify-between items-center mb-1">
-                          <p className="font-semibold text-white">{comment.kullanici}</p>
-                          <p className="text-xs text-zinc-400">{comment.tarih}</p>
+                          <p className="font-semibold text-foreground">{comment.kullanici}</p>
+                          <p className="text-xs text-muted-foreground">{comment.tarih}</p>
                         </div>
-                        <p className="text-zinc-300 break-words">{comment.yorum}</p>
+                        <p className="text-foreground/90 break-words">{comment.yorum}</p>
                       </div>
                     ))
                   ) : (
-                    <p className="text-zinc-500 text-center py-4">Henüz yorum yok. İlk yorumu siz yapın!</p>
+                    <p className="text-muted-foreground text-center py-4">Henüz yorum yok. İlk yorumu siz yapın!</p>
                   )}
                 </div>
               </div>
@@ -597,50 +593,52 @@ export default function HomePage() {
 
       {/* Sepet Modalı */}
       <Dialog open={isCartOpen} onOpenChange={setIsCartOpen}>
-        <DialogContent className="bg-zinc-800 text-white border-zinc-700 max-w-2xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">Sepetim</DialogTitle>
           </DialogHeader>
-          <div className="mt-4 flex flex-col h-[600px]">
-            <div className="flex-grow overflow-y-auto pr-2 space-y-4 custom-scrollbar">
+          <div className="mt-4 flex flex-col h-[500px]">
+            <div className="flex-grow overflow-y-auto -mr-4 pr-4 space-y-4 custom-scrollbar">
               {cart.length === 0 ? (
-                <p className="text-center text-zinc-400">Sepetiniz boş</p>
+                <p className="text-center text-muted-foreground pt-10">Sepetiniz boş</p>
               ) : (
                 cart.map((item) => (
-                  <div key={item.concert_id} className="flex items-center gap-4 p-4 bg-zinc-700/50 rounded-lg">
+                  <div key={item.concert_id} className="flex items-center gap-4 p-2 bg-muted/50 rounded-lg">
                     <img
                       src={`https://cdn.bubilet.com.tr${item.image}`}
                       alt={item.konser_adi}
-                      className="w-20 h-20 object-cover rounded"
+                      className="w-16 h-16 object-cover rounded"
                     />
                     <div className="flex-grow">
                       <h3 className="font-semibold">{item.konser_adi}</h3>
-                      <p className="text-sm text-zinc-400">{item.tarih} - {item.saat}</p>
+                      <p className="text-sm text-muted-foreground">{item.tarih} - {item.saat}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
-                        size="sm"
+                        size="icon"
+                        className="h-8 w-8"
                         onClick={() => updateQuantity(item.concert_id, item.quantity - 1)}
                       >
                         -
                       </Button>
-                      <span className="w-8 text-center">{item.quantity}</span>
+                      <span className="w-8 text-center font-semibold">{item.quantity}</span>
                       <Button
                         variant="outline"
-                        size="sm"
+                        size="icon"
+                        className="h-8 w-8"
                         onClick={() => updateQuantity(item.concert_id, item.quantity + 1)}
                       >
                         +
                       </Button>
                     </div>
                     <div className="w-24 text-right">
-                      <p className="font-semibold text-green-400">{item.fiyat * item.quantity}₺</p>
+                      <p className="font-semibold text-primary">{item.fiyat * item.quantity}₺</p>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-red-400 hover:text-red-500"
+                      className="text-muted-foreground hover:text-destructive"
                       onClick={() => removeFromCart(item.concert_id)}
                     >
                       Kaldır
@@ -650,13 +648,14 @@ export default function HomePage() {
               )}
             </div>
             {cart.length > 0 && (
-              <div className="border-t border-zinc-700 pt-4 mt-4">
+              <div className="border-t border-border pt-4 mt-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold">Toplam</span>
-                  <span className="text-2xl font-bold text-green-400">{getTotalPrice()}₺</span>
+                  <span className="text-lg font-semibold">Toplam Tutar</span>
+                  <span className="text-2xl font-bold text-primary">{getTotalPrice()}₺</span>
                 </div>
                 <Button 
-                  className="w-full mt-4 bg-green-500 hover:bg-green-600"
+                  size="lg"
+                  className="w-full mt-4"
                   onClick={handleCheckout}
                 >
                   Ödemeye Geç
@@ -668,8 +667,11 @@ export default function HomePage() {
       </Dialog>
 
       {/* Hiç konser yoksa */}
-      {filtered.length === 0 && (
-        <div className="text-zinc-400 mt-10 text-lg">Bu şehirde konser bulunamadı.</div>
+      {pagedConcerts.length === 0 && concerts.length > 0 && (
+        <div className="text-muted-foreground mt-10 text-lg anim-fade-in">Aradığınız kriterlere uygun konser bulunamadı.</div>
+      )}
+      {concerts.length === 0 && (
+        <div className="text-muted-foreground mt-10 text-lg anim-fade-in">Bu şehirde gösterilecek konser bulunamadı.</div>
       )}
     </div>
   );

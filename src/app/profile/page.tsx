@@ -9,9 +9,12 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { toast, Toaster } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, LogOut, UserCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type UserProfile = {
   isim: string;
@@ -114,7 +117,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-xl">Yükleniyor...</div>
       </div>
     );
@@ -122,96 +125,110 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center">
-        <div className="text-xl">Profil bilgileri bulunamadı</div>
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-xl">Profil bilgileri bulunamadı. Lütfen tekrar giriş yapın.</div>
+        <Button onClick={() => router.push('/login')} className="mt-4">Giriş Sayfasına Dön</Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-white pt-32 pb-10">
+    <>
       <Toaster richColors position="top-center" />
-      <div className="max-w-4xl mx-auto px-4">
-        {/* Geri Butonu */}
-        <Button
-          variant="ghost"
-          className="mb-6 text-zinc-400 hover:text-white"
-          onClick={() => router.push("/home")}
-        >
-          <ArrowLeft className="h-5 w-5 mr-2" />
-          Geri
-        </Button>
+      <div className="min-h-screen bg-background text-foreground p-4 sm:p-8 flex flex-col items-center">
+        <div className="w-full max-w-4xl">
+          <Button
+            variant="ghost"
+            className="mb-4 text-muted-foreground"
+            onClick={() => router.push("/home")}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Ana Sayfaya Dön
+          </Button>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Kullanıcı Bilgileri */}
-          <div className="bg-zinc-800 rounded-xl p-6 space-y-4">
-            <h2 className="text-2xl font-bold mb-6">Kullanıcı Bilgileri</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="text-zinc-400 text-sm">İsim</label>
-                <div className="text-lg font-medium">{profile.isim}</div>
+          <Card className="anim-fade-in-up">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div className="flex items-center gap-4">
+                <UserCircle className="w-10 h-10 text-primary" />
+                <div>
+                  <CardTitle className="text-2xl">Profil</CardTitle>
+                </div>
               </div>
-              <div>
-                <label className="text-zinc-400 text-sm">Soyisim</label>
-                <div className="text-lg font-medium">{profile.soyisim}</div>
-              </div>
-              <div>
-                <label className="text-zinc-400 text-sm">E-posta</label>
-                <div className="text-lg font-medium">{profile.mail}</div>
-              </div>
-              <div>
-                <label className="text-zinc-400 text-sm">Yaş</label>
-                <div className="text-lg font-medium">{profile.yas}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bakiye Bilgisi */}
-          <div className="bg-zinc-800 rounded-xl p-6">
-            <h2 className="text-2xl font-bold mb-6">Bakiye</h2>
-            <div className="flex items-center justify-between">
-              <div className="text-3xl font-bold text-green-400">
-                {profile.bakiye}₺
-              </div>
-              <Button
-                onClick={() => setIsBakiyeDialogOpen(true)}
-                className="bg-green-500 hover:bg-green-600"
-              >
-                +
+              <Button variant="outline" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Çıkış Yap
               </Button>
-            </div>
-          </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+                {/* User Info */}
+                <div className="md:col-span-2 space-y-6">
+                  <h3 className="text-lg font-medium text-foreground">Kullanıcı Bilgileri</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm text-muted-foreground">İsim</label>
+                      <p className="text-base font-semibold">{profile.isim}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm text-muted-foreground">Soyisim</label>
+                      <p className="text-base font-semibold">{profile.soyisim}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-sm text-muted-foreground">E-posta</label>
+                      <p className="text-base font-semibold">{profile.mail}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm text-muted-foreground">Yaş</label>
+                      <p className="text-base font-semibold">{profile.yas}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Bakiye Bilgisi */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-medium text-foreground">Bakiye</h3>
+                  <div className="bg-muted/50 p-4 rounded-lg flex items-center justify-between">
+                    <span className="text-3xl font-bold text-primary">{profile.bakiye}₺</span>
+                    <Button onClick={() => setIsBakiyeDialogOpen(true)}>
+                      Bakiye Ekle
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
       {/* Bakiye Ekleme Dialog */}
       <Dialog open={isBakiyeDialogOpen} onOpenChange={setIsBakiyeDialogOpen}>
-        <DialogContent className="bg-zinc-800 text-white border-zinc-700">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Bakiye Ekle</DialogTitle>
+            <DialogTitle>Bakiye Ekle</DialogTitle>
+            <DialogDescription>
+              Hesabınıza eklemek istediğiniz tutarı girin.
+            </DialogDescription>
           </DialogHeader>
-          <div className="mt-4 space-y-4">
-            <div>
-              <label className="text-sm text-zinc-400">Eklemek istediğiniz tutar</label>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={bakiyeAmount}
-                onChange={(e) => setBakiyeAmount(e.target.value)}
-                className="mt-1 bg-zinc-700 border-zinc-600 text-white"
-                placeholder="0.00"
-              />
-            </div>
-            <Button
-              className="w-full bg-green-500 hover:bg-green-600"
-              onClick={handleBakiyeAdd}
-            >
-              Bakiye Ekle
-            </Button>
+          <div className="py-4 space-y-4">
+            <Input
+              type="number"
+              min="1"
+              value={bakiyeAmount}
+              onChange={(e) => setBakiyeAmount(e.target.value)}
+              placeholder="0.00"
+            />
           </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsBakiyeDialogOpen(false)}
+            >
+              İptal
+            </Button>
+            <Button onClick={handleBakiyeAdd}>Ekle</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

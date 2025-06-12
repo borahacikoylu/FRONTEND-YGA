@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Ticket as TicketIcon } from "lucide-react";
 import { toast, Toaster } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 type Ticket = {
   konser_adi: string;
@@ -94,98 +95,91 @@ export default function TicketsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center">
-        <div className="text-xl">Yükleniyor...</div>
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-xl">Biletler Yükleniyor...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-white pt-32 pb-10">
+    <>
       <Toaster richColors position="top-center" />
-      <div className="max-w-4xl mx-auto px-4">
-        {/* Geri Butonu */}
-        <Button
-          variant="ghost"
-          className="mb-6 text-zinc-400 hover:text-white"
-          onClick={() => router.push("/home")}
-        >
-          <ArrowLeft className="h-5 w-5 mr-2" />
-          Geri
-        </Button>
+      <div className="min-h-screen bg-background text-foreground p-4 sm:p-8 flex flex-col items-center">
+        <div className="w-full max-w-5xl">
+          <Button
+            variant="ghost"
+            className="mb-4 text-muted-foreground"
+            onClick={() => router.push("/home")}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Ana Sayfaya Dön
+          </Button>
 
-        <div className="bg-zinc-800 rounded-xl p-6">
-          <h2 className="text-2xl font-bold mb-6">Biletlerim</h2>
-          
-          {tickets.length === 0 ? (
-            <div className="text-center text-zinc-400 py-8">
-              Henüz biletiniz bulunmuyor.
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {tickets.map((ticket, index) => (
-                <div
-                  key={index}
-                  className="bg-zinc-700/50 rounded-lg p-6 space-y-4 hover:bg-zinc-700/70 transition-colors"
-                >
-                  <div className="flex gap-6">
-                    {/* Konser Fotoğrafı */}
-                    <div className="w-48 h-48 flex-shrink-0">
+          <Card className="anim-fade-in-up">
+            <CardHeader>
+              <CardTitle className="text-2xl">Biletlerim</CardTitle>
+              <CardDescription>
+                Satın aldığınız tüm biletleri burada görüntüleyebilirsiniz.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {tickets.length === 0 ? (
+                <div className="text-center text-muted-foreground py-16">
+                  <TicketIcon className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                  <h3 className="mt-4 text-lg font-medium">Henüz biletiniz bulunmuyor.</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Bir etkinliğe katıldığınızda biletiniz burada görünecektir.
+                  </p>
+                  <Button className="mt-6" onClick={() => router.push('/home')}>
+                    Etkinlikleri Keşfet
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {tickets.map((ticket, index) => (
+                    <div
+                      key={index}
+                      className="border rounded-lg p-4 flex flex-col md:flex-row gap-4 transition-colors anim-fade-in-up"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
                       <img
                         src={ticket.image}
                         alt={ticket.konser_adi}
-                        className="w-full h-full object-cover rounded-lg"
+                        className="w-full md:w-32 h-48 md:h-auto object-cover rounded-md"
                       />
-                    </div>
-
-                    {/* Bilet Bilgileri */}
-                    <div className="flex-grow flex justify-between">
-                      <div>
-                        <h3 className="text-xl font-semibold mb-2">{ticket.konser_adi}</h3>
-                        <div className="space-y-2 text-zinc-300">
-                          <div className="flex items-center">
-                            <span className="mr-2">📍</span>
-                            <span>{ticket.mekan}</span>
+                      <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="md:col-span-2">
+                          <h3 className="text-lg font-semibold">{ticket.konser_adi}</h3>
+                          <p className="text-sm text-muted-foreground mt-1">{ticket.mekan}</p>
+                          <div className="mt-3 text-xs space-y-1 text-muted-foreground">
+                            <p><strong>Tarih:</strong> {ticket.tarih}</p>
+                            <p><strong>Saat:</strong> {ticket.saat}</p>
                           </div>
-                          <div className="flex items-center">
-                            <span className="mr-2">📅</span>
-                            <span>{ticket.tarih}</span>
+                        </div>
+                        <div className="flex flex-col items-start md:items-end justify-between">
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-primary">{ticket.fiyat}₺</p>
+                            <p className="text-xs text-primary font-medium">Aktif Bilet</p>
                           </div>
-                          <div className="flex items-center">
-                            <span className="mr-2">⏰</span>
-                            <span>{ticket.saat}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <span className="mr-2">🏠</span>
-                            <span className="text-sm">{ticket.adres}</span>
-                          </div>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => cancelTicket(ticket.concert_id, index)}
+                            disabled={cancellingTickets.has(index)}
+                            className="w-full md:w-auto mt-2 md:mt-0"
+                          >
+                            {cancellingTickets.has(index) ? "İptal Ediliyor..." : "İptal Et"}
+                          </Button>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-green-400 mb-2">
-                          {ticket.fiyat}₺
-                        </div>
-                        <div className="text-sm text-zinc-400 mb-3">
-                          Bilet Durumu: <span className="text-green-400">Aktif</span>
-                        </div>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => cancelTicket(ticket.concert_id, index)}
-                          disabled={cancellingTickets.has(index)}
-                          className="w-full"
-                        >
-                          {cancellingTickets.has(index) ? "İptal Ediliyor..." : "Bileti İptal Et"}
-                        </Button>
-                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </div>
+    </>
   );
 }

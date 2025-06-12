@@ -55,43 +55,43 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-zinc-900 text-white">
+    <div className="min-h-screen flex bg-background text-foreground">
       {/* Sol panel */}
-      <div className="w-[400px] flex flex-col items-start px-12 bg-zinc-950 pt-16">
-        <h1 className="text-4xl font-bold mb-8">Şehir Seç</h1>
+      <div className="w-[400px] flex flex-col items-start px-10 pt-14 bg-card border-r border-border">
+        <h1 className="text-4xl font-bold mb-8 text-primary">Şehir Seç</h1>
         <Input
-          className="mb-6 bg-zinc-800 border-none text-white placeholder:text-zinc-400"
-          placeholder="Şehir Ara"
+          className="mb-6"
+          placeholder="Şehir Ara (Örn: Ankara veya 06)"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <p className="text-lg font-semibold mb-4">
+        <p className="text-lg font-semibold mb-4 text-foreground/90">
           Şubilet'te şehrine özel tüm etkinlikler bir tık uzağında!
         </p>
-        <p className="text-md mb-8">
+        <p className="text-md mb-8 text-muted-foreground">
           Şehrini seçip eğlenceye başla.
         </p>
         {!selected && (
-          <span className="text-red-400 font-semibold">Lütfen bir şehir seçin.</span>
+          <span className="text-destructive font-semibold">Lütfen bir şehir seçin.</span>
         )}
       </div>
       {/* Sağ panel */}
-      <div className="flex-1 flex flex-col justify-center items-center">
-        <div className="w-full max-w-6xl px-4">
-          <div className="grid grid-cols-12 gap-4">
+      <div className="flex-1 flex flex-col justify-center items-center p-8">
+        <div className="w-full max-w-6xl">
+          <div className="grid grid-cols-10 gap-4">
             {filteredCities.map((city) => (
               <button
                 key={city.code}
                 className={clsx(
-                  "w-full aspect-square rounded-xl flex flex-col items-center justify-center text-base font-bold border-2 transition-all transition-transform duration-300 hover:scale-105 hover:shadow-2xl",
+                  "w-full aspect-square rounded-lg flex flex-col items-center justify-center text-base font-bold border transition-all duration-200 hover:scale-105",
                   selected === city.code
-                    ? "bg-green-500 border-green-300 text-white scale-105 shadow-lg"
-                    : "bg-zinc-800 border-zinc-700 hover:bg-green-700 hover:text-white"
+                    ? "bg-primary border-primary/50 text-primary-foreground scale-105 shadow-lg"
+                    : "bg-card border-border hover:bg-primary/90 hover:text-primary-foreground hover:border-primary"
                 )}
                 onClick={() => handleSelect(city)}
               >
-                <span className="text-lg">{city.code}</span>
-                <span className="text-xs">{city.name}</span>
+                <span className="text-lg font-extrabold">{city.code}</span>
+                <span className="text-xs font-medium">{city.name}</span>
               </button>
             ))}
           </div>
