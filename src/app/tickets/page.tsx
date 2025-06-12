@@ -14,12 +14,52 @@ type Ticket = {
   mekan: string;
   adres: string;
   image: string;
+  concert_id: number;
 };
 
 export default function TicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [cancellingTickets, setCancellingTickets] = useState<Set<number>>(new Set());
   const router = useRouter();
+
+  const cancelTicket = async (concertId: number, ticketIndex: number) => {
+    setCancellingTickets(prev => new Set(prev).add(ticketIndex));
+    
+    try {
+      const response = await fetch("http://localhost:8000/cancel-ticket/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          concert_id: concertId
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Bilet iptal edilemedi");
+      }
+
+      const data = await response.json();
+      
+      // Başarılı iptal durumunda bileti listeden kaldır
+      setTickets(prev => prev.filter((_, index) => index !== ticketIndex));
+      
+      toast.success(`Bilet başarıyla iptal edildi. ${data.iade_edilen_tutar}₺ iade edildi.`);
+      
+    } catch (error: any) {
+      toast.error(error.message || "Bilet iptal edilirken bir hata oluştu");
+    } finally {
+      setCancellingTickets(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(ticketIndex);
+        return newSet;
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -125,9 +165,18 @@ export default function TicketsPage() {
                         <div className="text-2xl font-bold text-green-400 mb-2">
                           {ticket.fiyat}₺
                         </div>
-                        <div className="text-sm text-zinc-400">
+                        <div className="text-sm text-zinc-400 mb-3">
                           Bilet Durumu: <span className="text-green-400">Aktif</span>
                         </div>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => cancelTicket(ticket.concert_id, index)}
+                          disabled={cancellingTickets.has(index)}
+                          className="w-full"
+                        >
+                          {cancellingTickets.has(index) ? "İptal Ediliyor..." : "Bileti İptal Et"}
+                        </Button>
                       </div>
                     </div>
                   </div>
