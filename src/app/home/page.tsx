@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ShoppingCart, User } from "lucide-react";
+import { ShoppingCart, User, Share2 } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
 const cities = [
@@ -53,10 +53,17 @@ type Concert = {
   mekan: string;
   adres: string;
   image: string;
+  yorumlar: Comment[];
 };
 
 type CartItem = Concert & {
   quantity: number;
+};
+
+type Comment = {
+  kullanici: string;
+  yorum: string;
+  tarih: string;
 };
 
 const PAGE_SIZE = 24;
@@ -74,6 +81,8 @@ export default function HomePage() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [clickedButtonId, setClickedButtonId] = useState<number | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [comments, setComments] = useState<Comment[]>([]);
 
   const isLoggedIn = typeof window !== 'undefined' && localStorage.getItem("user") !== null;
 
@@ -105,6 +114,26 @@ export default function HomePage() {
         setFiltered(data.konserler || []);
       });
   }, []);
+
+  useEffect(() => {
+    if (selectedConcert) {
+      const formattedComments = (selectedConcert.yorumlar || [])
+        .map(comment => ({
+          ...comment,
+          tarih: new Date(comment.tarih).toLocaleString('tr-TR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          }),
+        }))
+        .sort((a, b) => new Date(b.tarih).getTime() - new Date(a.tarih).getTime());
+      setComments(formattedComments);
+    } else {
+      setComments([]);
+    }
+  }, [selectedConcert]);
 
   // Arama filtreleme
   useEffect(() => {
@@ -217,6 +246,65 @@ export default function HomePage() {
     localStorage.removeItem("user");
     setIsProfileOpen(false);
     router.push("/login");
+  };
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim() || !selectedConcert) return;
+
+    if (!isLoggedIn) {
+      toast.error("Yorum yapmak için giriş yapmalısınız.");
+      return;
+    }
+
+    const userString = localStorage.getItem("user");
+    if (!userString) {
+      toast.error("Kullanıcı bilgileri bulunamadı. Lütfen tekrar giriş yapın.");
+      router.push("/login");
+      return;
+    }
+    const user = JSON.parse(userString);
+
+    try {
+      const response = await fetch("http://localhost:8000/add-comment/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          concert_id: selectedConcert.concert_id,
+          content: newComment,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Yorum eklenemedi.");
+      }
+
+      const newCommentData: Comment = {
+        kullanici: user.isim || "Siz",
+        yorum: newComment,
+        tarih: new Date().toLocaleString("tr-TR", {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+      };
+      
+      setComments((prevComments) => [newCommentData, ...prevComments]);
+      setNewComment("");
+      toast.success(data.detail || "Yorum başarıyla eklendi.");
+
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Yorum eklenirken bir hata oluştu."
+      );
+    }
   };
 
   return (
@@ -408,9 +496,24 @@ export default function HomePage() {
                     className="w-full h-full object-cover rounded-lg"
                   />
                 </div>
-                <div className="space-y-4">
+                <div className="flex flex-col space-y-4">
                   <div className="space-y-2">
-                    <h3 className="text-lg font-semibold text-zinc-300">Konser Detayları</h3>
+                     <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-semibold text-zinc-300">Konser Detayları</h3>
+                       <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          if (!selectedConcert) return;
+                          const concertUrl = `${window.location.origin}/home?concert=${selectedConcert.concert_id}`;
+                          navigator.clipboard.writeText(concertUrl);
+                          toast.success("URL Kopyalandı!");
+                        }}
+                        className="text-zinc-400 hover:text-white"
+                      >
+                        <Share2 className="h-5 w-5" />
+                      </Button>
+                    </div>
                     <div className="space-y-1">
                       <p className="flex items-center text-zinc-400">
                         <span className="mr-2">📍</span>
@@ -430,6 +533,7 @@ export default function HomePage() {
                       </p>
                     </div>
                   </div>
+                  <div className="flex-grow" />
                   <div className="pt-4 border-t border-zinc-700">
                     <div className="flex items-center justify-between">
                       <span className="text-2xl font-bold text-green-400">
@@ -446,6 +550,44 @@ export default function HomePage() {
                       </Button>
                     </div>
                   </div>
+                </div>
+              </div>
+              <div className="mt-6 pt-6 border-t border-zinc-700">
+                <h3 className="text-xl font-bold mb-4">Yorumlar</h3>
+                {isLoggedIn ? (
+                  <form onSubmit={handleCommentSubmit} className="flex gap-2 mb-4">
+                    <Input
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Yorumunuzu yazın..."
+                      className="bg-zinc-700 border-none flex-grow"
+                    />
+                    <Button type="submit" className="bg-green-500 hover:bg-green-600">Yorum Yap</Button>
+                  </form>
+                ) : (
+                  <div className="text-center p-4 bg-zinc-700/50 rounded-lg mb-4">
+                    <p className="text-zinc-400">
+                      Yorum yapmak için{' '}
+                      <Button variant="link" className="p-0 h-auto text-green-400 hover:underline" onClick={() => router.push('/login')}>
+                        giriş yapmalısınız
+                      </Button>.
+                    </p>
+                  </div>
+                )}
+                <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                  {comments.length > 0 ? (
+                    comments.map((comment, index) => (
+                      <div key={index} className="bg-zinc-700/50 p-3 rounded-lg">
+                        <div className="flex justify-between items-center mb-1">
+                          <p className="font-semibold text-white">{comment.kullanici}</p>
+                          <p className="text-xs text-zinc-400">{comment.tarih}</p>
+                        </div>
+                        <p className="text-zinc-300 break-words">{comment.yorum}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-zinc-500 text-center py-4">Henüz yorum yok. İlk yorumu siz yapın!</p>
+                  )}
                 </div>
               </div>
             </>
