@@ -29,6 +29,9 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isBakiyeDialogOpen, setIsBakiyeDialogOpen] = useState(false);
   const [bakiyeAmount, setBakiyeAmount] = useState("");
+  const [editIsim, setEditIsim] = useState("");
+  const [editSoyisim, setEditSoyisim] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -48,6 +51,8 @@ export default function ProfilePage() {
 
         const data = await response.json();
         setProfile(data);
+        setEditIsim(data.isim);
+        setEditSoyisim(data.soyisim);
       } catch (error) {
         toast.error("Profil bilgileri yüklenirken bir hata oluştu");
       } finally {
@@ -115,6 +120,31 @@ export default function ProfilePage() {
     }
   };
 
+  const handleSaveUserInfo = async () => {
+    if (!editIsim || !editSoyisim) {
+      toast.error("İsim ve soyisim boş olamaz");
+      return;
+    }
+    try {
+      const response = await fetch("http://localhost:8000/update-user/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ isim: editIsim, soyisim: editSoyisim }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || "Güncelleme başarısız");
+      }
+      const data = await response.json();
+      setProfile((prev) => prev ? { ...prev, isim: data.isim, soyisim: data.soyisim } : prev);
+      toast.success("Kullanıcı bilgileri güncellendi");
+      setIsEditing(false);
+    } catch (error: any) {
+      toast.error(error.message || "Bir hata oluştu");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
@@ -167,11 +197,27 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm text-muted-foreground">İsim</label>
-                      <p className="text-base font-semibold">{profile.isim}</p>
+                      {isEditing ? (
+                        <Input
+                          value={editIsim}
+                          onChange={e => setEditIsim(e.target.value)}
+                          className="mt-1"
+                        />
+                      ) : (
+                        <p className="text-base font-semibold">{profile.isim}</p>
+                      )}
                     </div>
                     <div>
                       <label className="text-sm text-muted-foreground">Soyisim</label>
-                      <p className="text-base font-semibold">{profile.soyisim}</p>
+                      {isEditing ? (
+                        <Input
+                          value={editSoyisim}
+                          onChange={e => setEditSoyisim(e.target.value)}
+                          className="mt-1"
+                        />
+                      ) : (
+                        <p className="text-base font-semibold">{profile.soyisim}</p>
+                      )}
                     </div>
                     <div className="col-span-2">
                       <label className="text-sm text-muted-foreground">E-posta</label>
@@ -181,6 +227,16 @@ export default function ProfilePage() {
                       <label className="text-sm text-muted-foreground">Yaş</label>
                       <p className="text-base font-semibold">{profile.yas}</p>
                     </div>
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    {isEditing ? (
+                      <>
+                        <Button size="sm" onClick={handleSaveUserInfo}>Kaydet</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setIsEditing(false); setEditIsim(profile.isim); setEditSoyisim(profile.soyisim); }}>İptal</Button>
+                      </>
+                    ) : (
+                      <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>Düzenle</Button>
+                    )}
                   </div>
                 </div>
                 
